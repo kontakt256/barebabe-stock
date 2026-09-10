@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bare Babe Stock System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f5f5f5; 
+            color: #333;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+        .header h1 { font-size: 24px; color: #333; margin-bottom: 5px; }
+        .header p { color: #666; font-size: 14px; }
+        .status { 
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .tab-btn { 
+            padding: 10px 20px; 
+            border: none; 
+            background: none; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            font-size: 15px; 
+            color: #666; 
+            transition: all 0.2s;
+        }
+        .tab-btn.active { color: #d946ef; border-color: #d946ef; font-weight: 600; }
+        .tab-btn:hover { color: #333; }
+        .tab-content { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            display: none;
+        }
+        .tab-content.show { display: block; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: 500; font-size: 14px; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #d946ef; 
+            box-shadow: 0 0 0 2px rgba(217,70,239,0.1); 
+        }
+        .btn { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 500; 
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #d946ef; color: white; }
+        .btn-primary:hover { background: #c026d3; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary { background: #f3f4f6; color: #333; border: 1px solid #ddd; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .card { background: #f9fafb; padding: 15px; border: 1px solid #e5e7eb; border-radius: 6px; }
+        .card h3 { color: #333; margin-bottom: 10px; font-size: 16px; }
+        .card p { color: #666; font-size: 14px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #d946ef; }
+        table { width: 100%; border-collapse: collapse; }
+        th { 
+            background: #f3f4f6; 
+            padding: 12px; 
+            text-align: left; 
+            font-weight: 600; 
+            font-size: 13px; 
+            color: #666; 
+            border-bottom: 1px solid #e5e7eb; 
+        }
+        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 20px; color: #333; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .action-buttons button { flex: 1; }
+        .search-box { margin-bottom: 15px; }
+        .toolbar { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+            justify-content: space-between; 
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .toolbar-left { display: flex; gap: 10px; flex-wrap: wrap; }
+        .success-msg {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .error-msg {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Bare Babe Stock Management System</h1>
+            <p>Stock tracking system with Google Sheets integration</p>
+            <div class="status">✅ Connected to Google Sheet</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+            <button class="tab-btn" data-tab="products">📦 Products</button>
+            <button class="tab-btn" data-tab="stock-in">➕ Stock In</button>
+            <button class="tab-btn" data-tab="adjustments">🔧 Adjustments</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content show">
+            <h2 style="margin-bottom: 20px;">📈 Dashboard</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Total Products</h3>
+                    <p class="stat-value" id="stat-products">0</p>
+                </div>
+                <div class="card">
+                    <h3>Total Stock In</h3>
+                    <p class="stat-value" id="stat-stock-in">0</p>
+                </div>
+                <div class="card">
+                    <h3>Stock In Entries</h3>
+                    <p class="stat-value" id="stat-entries">0</p>
+                </div>
+                <div class="card">
+                    <h3>Adjustments</h3>
+                    <p class="stat-value" id="stat-adjustments">0</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h3 style="margin-bottom: 15px;">📋 Recent Stock In</h3>
+                <div id="recent-stock">
+                    <div class="empty-state">No records yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTS TAB -->
+        <div id="products" class="tab-content">
+            <div class="toolbar">
+                <h2>📦 Products</h2>
+                <div class="toolbar-left">
+                    <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+                    <label style="cursor: pointer; margin: 0;">
+                        <button class="btn btn-secondary">📥 Import CSV</button>
+                        <input type="file" accept=".csv" id="csv-import" style="display: none;" onchange="importCSV(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="product-search" placeholder="Search by name or SKU..." onkeyup="filterProductTable()">
+            </div>
+
+            <div id="products-table">
+                <div class="empty-state">No products yet</div>
+            </div>
+        </div>
+
+        <!-- STOCK IN TAB -->
+        <div id="stock-in" class="tab-content">
+            <div class="toolbar">
+                <h2>➕ Stock In</h2>
+                <div class="toolbar-left">
+                    <button class="btn btn-primary" onclick="openStockInModal()">+ Add Stock In</button>
+                </div>
+            </div>
+
+            <div id="stock-in-message"></div>
+            <div id="stock-in-table">
+                <div class="empty-state">No records yet</div>
+            </div>
+        </div>
+
+        <!-- ADJUSTMENTS TAB -->
+        <div id="adjustments" class="tab-content">
+            <h2 style="margin-bottom: 20px;">🔧 Adjustments</h2>
+            <button class="btn btn-primary" onclick="openAdjustmentModal()" style="margin-bottom: 20px;">+ Add Adjustment</button>
+            
+            <div id="adjustments-table">
+                <div class="empty-state">No records yet</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT MODAL -->
+    <div class="modal" id="product-modal" onclick="if(event.target === this) closeProductModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Add New Product</h2>
+                <button class="close-btn" onclick="closeProductModal()">×</button>
+            </div>
+            <div id="product-msg"></div>
+            <form onsubmit="submitProductForm(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" id="prod-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU *</label>
+                        <input type="text" id="prod-sku" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" id="prod-price" step="0.01" value="0">
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STOCK IN MODAL -->
+    <div class="modal" id="stock-in-modal" onclick="if(event.target === this) closeStockInModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Add Stock In</h2>
+                <button class="close-btn" onclick="closeStockInModal()">×</button>
+            </div>
+            <div id="stock-in-msg"></div>
+            <form onsubmit="submitStockInForm(event)">
+                <div class="form-group">
+                    <label>Product Name *</label>
+                    <input type="text" id="stock-product" placeholder="Type product name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>SKU</label>
+                        <input type="text" id="stock-sku" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity *</label>
+                        <input type="number" id="stock-qty" required min="1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Expiry Date *</label>
+                        <input type="date" id="stock-expiry" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Lot Number</label>
+                        <input type="text" id="stock-lot">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Checked By</label>
+                        <input type="text" id="stock-checker" placeholder="Tong / Namwan / Mint">
+                    </div>
+                    <div class="form-group">
+                        <label>Check Date</label>
+                        <input type="date" id="stock-check-date">
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeStockInModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Stock In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADJUSTMENT MODAL -->
+    <div class="modal" id="adjustment-modal" onclick="if(event.target === this) closeAdjustmentModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Add Adjustment</h2>
+                <button class="close-btn" onclick="closeAdjustmentModal()">×</button>
+            </div>
+            <div id="adjustment-msg"></div>
+            <form onsubmit="submitAdjustmentForm(event)">
+                <div class="form-group">
+                    <label>Product Name *</label>
+                    <input type="text" id="adj-product" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Old Quantity</label>
+                        <input type="number" id="adj-old-qty" disabled placeholder="Will auto-fill from products">
+                    </div>
+                    <div class="form-group">
+                        <label>New Quantity *</label>
+                        <input type="number" id="adj-new-qty" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Reason *</label>
+                    <select id="adj-reason" required>
+                        <option value="">-- Select Reason --</option>
+                        <option value="Count mismatch">Count mismatch</option>
+                        <option value="Missing items">Missing items</option>
+                        <option value="Damaged goods">Damaged goods</option>
+                        <option value="Data entry error">Data entry error</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea id="adj-notes" rows="3" placeholder="Enter details..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeAdjustmentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Adjustment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLevZNuVclokgKpXdTzjMArRqJfwENKhzaD8e3277zMeLZgmAFQOi4se1ElhgtdwBa/exec';
+
+        // Data storage
+        let appData = {
+            products: [],
+            stockIn: [],
+            adjustments: []
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLocalData();
+            setupTabButtons();
+            renderDashboard();
+        });
+
+        // Load data from localStorage
+        function loadLocalData() {
+            const saved = localStorage.getItem('barebabeData');
+            if (saved) {
+                appData = JSON.parse(saved);
+            }
+        }
+
+        // Save data to localStorage
+        function saveLocalData() {
+            localStorage.setItem('barebabeData', JSON.stringify(appData));
+            updateAllTabs();
+        }
+
+        // Send data to Google Sheet via Apps Script
+        function submitToGoogleSheet(type, data) {
+            const payload = {
+                type: type,
+                timestamp: new Date().toLocaleString('th-TH'),
+                ...data
+            };
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.text())
+            .then(result => {
+                console.log('Google Sheet updated:', result);
+            })
+            .catch(err => console.error('Error:', err));
+        }
+
+        // TAB SYSTEM
+        function setupTabButtons() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.dataset.tab;
+                    showTab(tabName);
+                });
+            });
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('show'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('show');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            if (tabName === 'dashboard') renderDashboard();
+            else if (tabName === 'products') renderProducts();
+            else if (tabName === 'stock-in') renderStockInTable();
+            else if (tabName === 'adjustments') renderAdjustmentsTable();
+        }
+
+        function updateAllTabs() {
+            renderDashboard();
+            renderProducts();
+            renderStockInTable();
+            renderAdjustmentsTable();
+        }
+
+        // DASHBOARD
+        function renderDashboard() {
+            document.getElementById('stat-products').textContent = appData.products.length;
+            document.getElementById('stat-stock-in').textContent = appData.stockIn.reduce((sum, s) => sum + (s.qty || 0), 0);
+            document.getElementById('stat-entries').textContent = appData.stockIn.length;
+            document.getElementById('stat-adjustments').textContent = appData.adjustments.length;
+
+            // Recent
+            const recent = appData.stockIn.slice(-5).reverse();
+            let html = '';
+            if (recent.length === 0) {
+                html = '<div class="empty-state">No records yet</div>';
+            } else {
+                html = '<table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Expiry</th></tr></thead><tbody>';
+                recent.forEach(s => {
+                    html += `<tr><td>${new Date(s.timestamp).toLocaleDateString('en-US')}</td><td>${s.product}</td><td>${s.qty}</td><td>${s.expiryDate || '-'}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('recent-stock').innerHTML = html;
+        }
+
+        // PRODUCTS
+        function openProductModal() {
+            document.getElementById('product-msg').innerHTML = '';
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-sku').value = '';
+            document.getElementById('prod-price').value = '0';
+            document.getElementById('product-modal').classList.add('show');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.remove('show');
+        }
+
+        function submitProductForm(e) {
+            e.preventDefault();
+            const name = document.getElementById('prod-name').value;
+            const sku = document.getElementById('prod-sku').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+
+            if (!name || !sku) {
+                document.getElementById('product-msg').innerHTML = '<div class="error-msg">❌ Please fill in all required fields</div>';
+                return;
+            }
+
+            const product = {
+                id: Date.now(),
+                name,
+                sku,
+                price,
+                currentQty: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.products.push(product);
+            submitToGoogleSheet('product', product);
+            saveLocalData();
+
+            document.getElementById('product-msg').innerHTML = '<div class="success-msg">✅ Product added successfully</div>';
+            setTimeout(() => closeProductModal(), 800);
+        }
+
+        function renderProducts() {
+            const search = document.getElementById('product-search')?.value?.toLowerCase() || '';
+            const filtered = appData.products.filter(p => 
+                p.name.toLowerCase().includes(search) || p.sku.toLowerCase().includes(search)
+            );
+
+            let html = '';
+            if (filtered.length === 0) {
+                html = '<div class="empty-state">No products yet</div>';
+            } else {
+                html = '<table><thead><tr><th>Product</th><th>SKU</th><th>Current Qty</th><th>Price</th><th>Total Value</th></tr></thead><tbody>';
+                filtered.forEach(p => {
+                    const totalValue = (p.currentQty || 0) * p.price;
+                    html += `<tr><td><strong>${p.name}</strong></td><td>${p.sku}</td><td>${p.currentQty || 0}</td><td>$${p.price.toLocaleString('en-US', {maximumFractionDigits: 2})}</td><td>$${totalValue.toLocaleString('en-US', {maximumFractionDigits: 0})}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('products-table').innerHTML = html;
+        }
+
+        function filterProductTable() {
+            renderProducts();
+        }
+
+        function importCSV(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const lines = event.target.result.split('\n').slice(1);
+                let count = 0;
+
+                lines.forEach(line => {
+                    if (!line.trim()) return;
+                    const [name, sku, qty, price] = line.split(',');
+                    if (name && sku) {
+                        const product = {
+                            id: Date.now() + Math.random(),
+                            name: name.trim(),
+                            sku: sku.trim(),
+                            price: parseFloat(price) || 0,
+                            currentQty: parseInt(qty) || 0,
+                            createdAt: new Date().toISOString()
+                        };
+                        appData.products.push(product);
+                        submitToGoogleSheet('product', product);
+                        count++;
+                    }
+                });
+
+                saveLocalData();
+                alert(`✅ Imported ${count} products successfully`);
+                document.getElementById('csv-import').value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // STOCK IN
+        function openStockInModal() {
+            document.getElementById('stock-in-msg').innerHTML = '';
+            document.getElementById('stock-product').value = '';
+            document.getElementById('stock-sku').value = '';
+            document.getElementById('stock-qty').value = '';
+            document.getElementById('stock-expiry').value = '';
+            document.getElementById('stock-lot').value = '';
+            document.getElementById('stock-checker').value = '';
+            document.getElementById('stock-check-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('stock-in-modal').classList.add('show');
+        }
+
+        function closeStockInModal() {
+            document.getElementById('stock-in-modal').classList.remove('show');
+        }
+
+        function submitStockInForm(e) {
+            e.preventDefault();
+            const product = document.getElementById('stock-product').value;
+            const sku = document.getElementById('stock-sku').value;
+            const qty = parseInt(document.getElementById('stock-qty').value);
+            const expiryDate = document.getElementById('stock-expiry').value;
+            const lotNumber = document.getElementById('stock-lot').value;
+            const checker = document.getElementById('stock-checker').value;
+            const checkDate = document.getElementById('stock-check-date').value;
+
+            if (!product || !qty || !expiryDate) {
+                document.getElementById('stock-in-msg').innerHTML = '<div class="error-msg">❌ Please fill in all required fields</div>';
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                product,
+                sku,
+                qty,
+                expiryDate,
+                lotNumber,
+                checker,
+                checkDate,
+                timestamp: new Date().toISOString()
+            };
+
+            appData.stockIn.push(entry);
+            submitToGoogleSheet('stock_in', entry);
+
+            // Update product qty
+            const prodIndex = appData.products.findIndex(p => p.name.toLowerCase() === product.toLowerCase());
+            if (prodIndex >= 0) {
+                appData.products[prodIndex].currentQty = (appData.products[prodIndex].currentQty || 0) + qty;
+            }
+
+            saveLocalData();
+            document.getElementById('stock-in-msg').innerHTML = '<div class="success-msg">✅ Stock In recorded successfully</div>';
+            setTimeout(() => closeStockInModal(), 800);
+        }
+
+        function renderStockInTable() {
+            let html = '';
+            if (appData.stockIn.length === 0) {
+                html = '<div class="empty-state">No records yet</div>';
+            } else {
+                html = '<table><thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Expiry</th><th>Lot</th><th>Checked By</th></tr></thead><tbody>';
+                appData.stockIn.slice().reverse().forEach(s => {
+                    html += `<tr><td>${new Date(s.timestamp).toLocaleDateString('en-US')}</td><td><strong>${s.product}</strong></td><td>${s.qty}</td><td>${s.expiryDate}</td><td>${s.lotNumber || '-'}</td><td>${s.checker || '-'}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('stock-in-table').innerHTML = html;
+        }
+
+        // ADJUSTMENTS
+        function openAdjustmentModal() {
+            document.getElementById('adjustment-msg').innerHTML = '';
+            document.getElementById('adj-product').value = '';
+            document.getElementById('adj-old-qty').value = '';
+            document.getElementById('adj-new-qty').value = '';
+            document.getElementById('adj-reason').value = '';
+            document.getElementById('adj-notes').value = '';
+            document.getElementById('adjustment-modal').classList.add('show');
+        }
+
+        function closeAdjustmentModal() {
+            document.getElementById('adjustment-modal').classList.remove('show');
+        }
+
+        function submitAdjustmentForm(e) {
+            e.preventDefault();
+            const product = document.getElementById('adj-product').value;
+            const newQty = parseInt(document.getElementById('adj-new-qty').value);
+            const reason = document.getElementById('adj-reason').value;
+            const notes = document.getElementById('adj-notes').value;
+
+            if (!product || isNaN(newQty) || !reason) {
+                document.getElementById('adjustment-msg').innerHTML = '<div class="error-msg">❌ Please fill in all required fields</div>';
+                return;
+            }
+
+            const prodIndex = appData.products.findIndex(p => p.name.toLowerCase() === product.toLowerCase());
+            const oldQty = prodIndex >= 0 ? (appData.products[prodIndex].currentQty || 0) : 0;
+
+            const adjustment = {
+                id: Date.now(),
+                product,
+                oldQty,
+                newQty,
+                difference: newQty - oldQty,
+                reason,
+                notes,
+                timestamp: new Date().toISOString()
+            };
+
+            appData.adjustments.push(adjustment);
+            submitToGoogleSheet('adjustment', adjustment);
+
+            // Update product qty
+            if (prodIndex >= 0) {
+                appData.products[prodIndex].currentQty = newQty;
+            }
+
+            saveLocalData();
+            document.getElementById('adjustment-msg').innerHTML = '<div class="success-msg">✅ Adjustment recorded successfully</div>';
+            setTimeout(() => closeAdjustmentModal(), 800);
+        }
+
+        function renderAdjustmentsTable() {
+            let html = '';
+            if (appData.adjustments.length === 0) {
+                html = '<div class="empty-state">No records yet</div>';
+            } else {
+                html = '<table><thead><tr><th>Date</th><th>Product</th><th>Old Qty</th><th>New Qty</th><th>Diff</th><th>Reason</th></tr></thead><tbody>';
+                appData.adjustments.slice().reverse().forEach(a => {
+                    const diffColor = a.difference >= 0 ? '#16a34a' : '#dc2626';
+                    html += `<tr><td>${new Date(a.timestamp).toLocaleDateString('en-US')}</td><td><strong>${a.product}</strong></td><td>${a.oldQty}</td><td>${a.newQty}</td><td><strong style="color: ${diffColor}">${a.difference > 0 ? '+' : ''}${a.difference}</strong></td><td>${a.reason}</td></tr>`;
+                });
+                html += '</tbody></table>';
+            }
+            document.getElementById('adjustments-table').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
